@@ -1,0 +1,87 @@
+<!doctype html>
+<!-- Página do link de ativação do SAMPLE LOG (GitHub Pages, repositório público samplelog-ativar).
+     A chave vem depois do # e nunca sai do aparelho: o navegador não manda o # ao servidor.
+     O botão abre o app instalado com samplelog://ativar/<chave>; no Android, por intent://.
+     Fonte no repositório SAMPLE_LOG em native/ativar/index.html; copie de lá a cada mudança. -->
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<meta name="robots" content="noindex">
+<title>Ativar SAMPLE LOG</title>
+<style>
+  :root { --bg:#F4F4F2; --panel:#FFFFFF; --text:#16171A; --muted:#62656B; --line:#DADBD6; --red:#EE2434; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#101114; --panel:#17181C; --text:#ECECEA; --muted:#9A9DA3; --line:#2C2E33; } }
+  * { box-sizing:border-box; }
+  body { margin:0; min-height:100vh; display:flex; align-items:center; justify-content:center; padding:16px;
+         background:var(--bg); color:var(--text); font:15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  main { width:100%; max-width:440px; background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:24px; }
+  .logo { display:inline-block; background:var(--red); color:#fff; font-weight:800; letter-spacing:1px; padding:4px 10px; border-radius:6px; }
+  h1 { font-size:20px; margin:14px 0 4px; }
+  p { margin:8px 0; color:var(--muted); }
+  .who { color:var(--text); font-weight:600; }
+  a.btn, button { display:block; width:100%; text-align:center; padding:14px; margin-top:14px; border-radius:8px; font:inherit; font-weight:700;
+                  text-decoration:none; cursor:pointer; border:1px solid var(--red); }
+  a.btn { background:var(--red); color:#fff; }
+  button { background:transparent; color:var(--text); border-color:var(--line); }
+  ol { padding-left:20px; color:var(--muted); margin:16px 0 0; }
+  .err { color:var(--red); font-weight:600; }
+  small { display:block; margin-top:18px; color:var(--muted); }
+</style>
+</head>
+<body>
+<main>
+  <span class="logo">SAMPLE LOG</span>
+  <div id="ok" hidden>
+    <h1>Ativar o SAMPLE LOG</h1>
+    <p>Licença para <span class="who" id="cli"></span>, válida até <span class="who" id="val"></span>.</p>
+    <a class="btn" id="abrir" href="#">Abrir no SAMPLE LOG</a>
+    <button id="copiar" type="button">Copiar a chave</button>
+    <ol>
+      <li>Instale o SAMPLE LOG antes de tocar no botão.</li>
+      <li>Se o app não abrir, toque em <b>Copiar a chave</b>, abra o app e cole na tela de ativação.</li>
+    </ol>
+  </div>
+  <div id="bad" hidden>
+    <h1>Link incompleto</h1>
+    <p class="err">Este link não tem a chave de licença inteira.</p>
+    <p>Peça o link de novo, ou copie a mensagem inteira e cole na tela de ativação do app.</p>
+  </div>
+  <small>O app funciona sem internet. Dúvidas: fale com quem enviou o link.</small>
+</main>
+<script>
+(function () {
+  var h = "";
+  try { h = decodeURIComponent(location.hash.slice(1)); } catch (e) { h = location.hash.slice(1); }
+  var m = h.match(/SAMPLELOG-1\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+/), key = m ? m[0] : "", data = null;
+  if (key) {
+    try {
+      var s = key.split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
+      while (s.length % 4) s += "=";
+      data = JSON.parse(decodeURIComponent(escape(atob(s))));
+    } catch (e) { data = null; }
+  }
+  if (!data || !data.cliente || !data.validade) { document.getElementById("bad").hidden = false; return; }
+  document.getElementById("ok").hidden = false;
+  document.getElementById("cli").textContent = data.cliente;
+  document.getElementById("val").textContent = String(data.validade).split("-").reverse().join("/");
+  var android = /Android/i.test(navigator.userAgent),
+      a = document.getElementById("abrir");
+  a.href = android
+    ? "intent://ativar/" + key + "#Intent;scheme=samplelog;package=br.com.ernanivilela.samplelog;end"
+    : "samplelog://ativar/" + key;
+  document.getElementById("copiar").onclick = function () {
+    var b = this, done = function () { b.textContent = "Chave copiada. Agora cole no app."; };
+    function fallback() {
+      var t = document.createElement("textarea"); t.value = key; document.body.appendChild(t); t.select();
+      try { document.execCommand("copy"); done(); } catch (e) { b.textContent = "Não deu para copiar. Peça a chave em texto."; }
+      document.body.removeChild(t);
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(key).then(done, fallback);
+    else fallback();
+  };
+})();
+</script>
+</body>
+</html>
